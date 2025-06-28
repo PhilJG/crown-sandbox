@@ -4,10 +4,26 @@ const canvas = document.createElement("canvas");
 document.body.appendChild(canvas);
 const ctx = canvas.getContext("2d");
 
-// Set canvas to full window size
+// Square properties
+let square = {
+  x: 0,
+  y: 0,
+  size: 0,
+  padding: 20 // Space between square edge and particles
+};
+
+// Set canvas to full window size and calculate square dimensions
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  
+  // Calculate square size (80% of the smaller dimension)
+  const minDimension = Math.min(canvas.width, canvas.height);
+  square.size = minDimension * 0.8;
+  
+  // Center the square
+  square.x = (canvas.width - square.size) / 2;
+  square.y = (canvas.height - square.size) / 2;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -28,9 +44,34 @@ class Particle {
   }
 
   update() {
+    // Update position
     this.x += this.speedX;
     this.y += this.speedY;
     this.life--;
+    
+    // Get square boundaries (with padding)
+    const left = square.x + square.padding;
+    const right = square.x + square.size - square.padding;
+    const top = square.y + square.padding;
+    const bottom = square.y + square.size - square.padding;
+    
+    // Check horizontal boundaries
+    if (this.x - this.size < left || this.x + this.size > right) {
+      this.speedX *= -0.8; // Reverse and dampen horizontal speed
+      // Ensure particle doesn't get stuck outside the boundary
+      this.x = Math.max(left + this.size, Math.min(right - this.size, this.x));
+    }
+    
+    // Check vertical boundaries
+    if (this.y - this.size < top || this.y + this.size > bottom) {
+      this.speedY *= -0.8; // Reverse and dampen vertical speed
+      // Ensure particle doesn't get stuck outside the boundary
+      this.y = Math.max(top + this.size, Math.min(bottom - this.size, this.y));
+    }
+    
+    // Apply some friction
+    this.speedX *= 0.99;
+    this.speedY *= 0.99;
   }
 
   draw() {
@@ -67,10 +108,11 @@ function createParticles(probability) {
     if (particles.length > maxParticles) {
       particles.shift();
     }
+    // Create particles within the square bounds (with padding)
     particles.push(
       new Particle(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height,
+        square.x + square.padding + Math.random() * (square.size - 2 * square.padding),
+        square.y + square.padding + Math.random() * (square.size - 2 * square.padding),
         color
       )
     );
@@ -80,8 +122,19 @@ function createParticles(probability) {
 // Animation loop
 function animate() {
   // Clear with semi-transparent black for trail effect
-  ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw the square boundary
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(square.x, square.y, square.size, square.size);
+  
+  // Set clipping region to the square
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(square.x, square.y, square.size, square.size);
+  ctx.clip();
 
   // Update and draw particles
   for (let i = particles.length - 1; i >= 0; i--) {
@@ -90,9 +143,12 @@ function animate() {
 
     // Remove dead particles
     if (particles[i].life <= 0) {
-      particles.splice(i, 1);
+        particles.splice(i, 1);
     }
   }
+  
+  // Restore the clipping region
+  ctx.restore();
 
   requestAnimationFrame(animate);
 }
