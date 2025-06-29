@@ -4,154 +4,128 @@ const canvas = document.createElement("canvas");
 document.body.appendChild(canvas);
 const ctx = canvas.getContext("2d");
 
-// Square properties
-let square = {
-  x: 0,
-  y: 0,
-  size: 0,
-  padding: 20 // Space between square edge and particles
-};
-
-// Set canvas to full window size and calculate square dimensions
-function resize() {
+// Set canvas to full window size
+function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  
-  // Calculate square size (80% of the smaller dimension)
-  const minDimension = Math.min(canvas.width, canvas.height);
-  square.size = minDimension * 0.8;
-  
-  // Center the square
-  square.x = (canvas.width - square.size) / 2;
-  square.y = (canvas.height - square.size) / 2;
 }
-window.addEventListener("resize", resize);
-resize();
 
-// Particle system
-const particles = [];
-const maxParticles = 100;
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-class Particle {
-  constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.size = Math.random() * 15 + 5;
-    this.color = color;
-    this.speedX = Math.random() * 3 - 1.5;
-    this.speedY = Math.random() * 3 - 1.5;
-    this.life = 100;
+// Circle state
+let circle = {
+  x: 0,
+  y: 0,
+  radius: 0,
+  targetRadius: 100,
+  color: "#3498db",
+  lastProbability: 0,
+  currentProbability: 0,
+};
+
+// Update initial status
+document.addEventListener("DOMContentLoaded", () => {
+  const statusElement = document.getElementById("status");
+  if (statusElement) {
+    statusElement.textContent = "Waiting for calm data...";
   }
+});
 
-  update() {
-    // Update position
-    this.x += this.speedX;
-    this.y += this.speedY;
-    this.life--;
-    
-    // Get square boundaries (with padding)
-    const left = square.x + square.padding;
-    const right = square.x + square.size - square.padding;
-    const top = square.y + square.padding;
-    const bottom = square.y + square.size - square.padding;
-    
-    // Check horizontal boundaries
-    if (this.x - this.size < left || this.x + this.size > right) {
-      this.speedX *= -0.8; // Reverse and dampen horizontal speed
-      // Ensure particle doesn't get stuck outside the boundary
-      this.x = Math.max(left + this.size, Math.min(right - this.size, this.x));
-    }
-    
-    // Check vertical boundaries
-    if (this.y - this.size < top || this.y + this.size > bottom) {
-      this.speedY *= -0.8; // Reverse and dampen vertical speed
-      // Ensure particle doesn't get stuck outside the boundary
-      this.y = Math.max(top + this.size, Math.min(bottom - this.size, this.y));
-    }
-    
-    // Apply some friction
-    this.speedX *= 0.99;
-    this.speedY *= 0.99;
-  }
-
-  draw() {
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
+// Update circle position based on canvas size
+function updateCircle() {
+  circle.x = canvas.width / 2;
+  circle.y = canvas.height / 2;
+  circle.radius = Math.min(canvas.width, canvas.height) * 0.1; // 10% of smaller dimension
 }
 
 // Handle WebSocket messages
 socket.onmessage = function(event) {
   const data = JSON.parse(event.data);
   if (data.type === "calm") {
-    createParticles(data.probability);
+    updateCircleState(data.probability);
   }
 };
 
-function createParticles(probability) {
-  // Map probability to color
-  let color;
+function updateCircleState(probability) {
+  // Store current probability for display
+  circle.currentProbability = probability;
+
+  // Map probability (0-1) to color
   if (probability > 0.4) {
-    color = "#3498db"; // Blue
+    circle.color = "#3498db"; // Blue - calm
   } else if (probability > 0.3) {
-    color = "#2ecc71"; // Green
+    circle.color = "#2ecc71"; // Green
   } else if (probability > 0.2) {
-    color = "#e67e22"; // Orange
+    circle.color = "#e67e22"; // Orange
   } else {
-    color = "#e74c3c"; // Red
+    circle.color = "#e74c3c"; // Red - least calm
   }
 
-  // Create particles at random positions
-  for (let i = 0; i < 5; i++) {
-    if (particles.length > maxParticles) {
-      particles.shift();
-    }
-    // Create particles within the square bounds (with padding)
-    particles.push(
-      new Particle(
-        square.x + square.padding + Math.random() * (square.size - 2 * square.padding),
-        square.y + square.padding + Math.random() * (square.size - 2 * square.padding),
-        color
-      )
-    );
-  }
+  // Map probability to size (20% to 80% of maximum size)
+  const minSize = Math.min(canvas.width, canvas.height) * 0.2;
+  const maxSize = Math.min(canvas.width, canvas.height) * 0.8;
+  circle.targetRadius = minSize + (maxSize - minSize) * probability;
+
+  // Store last probability for smooth transitions
+  circle.lastProbability = probability;
 }
 
 // Animation loop
 function animate() {
-  // Clear with semi-transparent black for trail effect
-  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  // Clear canvas with a semi-transparent black for trail effect
+  ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Draw the square boundary
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(square.x, square.y, square.size, square.size);
-  
-  // Set clipping region to the square
-  ctx.save();
+
+  // Smoothly interpolate the current radius towards the target radius
+  circle.radius += (circle.targetRadius - circle.radius) * 0.1;
+
+  // Draw the circle
   ctx.beginPath();
-  ctx.rect(square.x, square.y, square.size, square.size);
-  ctx.clip();
+  ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
 
-  // Update and draw particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    particles[i].update();
-    particles[i].draw();
-
-    // Remove dead particles
-    if (particles[i].life <= 0) {
-        particles.splice(i, 1);
-    }
+  // Create a simple centered gradient
+  const gradient = ctx.createRadialGradient(
+    circle.x, circle.y, 0,  // Start at center with 0 radius
+    circle.x, circle.y, circle.radius  // End at full radius
+  );
+  
+  // Add color stops based on the current color
+  if (circle.color === '#3498db') { // Blue (calm)
+    gradient.addColorStop(0, '#64b5f6');
+    gradient.addColorStop(1, '#1565c0');
+  } else if (circle.color === '#2ecc71') { // Green
+    gradient.addColorStop(0, '#69f0ae');
+    gradient.addColorStop(1, '#1b5e20');
+  } else if (circle.color === '#e67e22') { // Orange
+    gradient.addColorStop(0, '#ffb74d');
+    gradient.addColorStop(1, '#e65100');
+  } else { // Red
+    gradient.addColorStop(0, '#ff8a80');
+    gradient.addColorStop(1, '#b71c1c');
   }
   
-  // Restore the clipping region
-  ctx.restore();
+  // Draw the circle with gradient
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Update the status element with current probability
+  const statusElement = document.getElementById("status");
+  if (statusElement) {
+    statusElement.textContent = `Calm: ${(
+      circle.currentProbability * 100
+    ).toFixed(1)}%`;
+  }
 
   requestAnimationFrame(animate);
 }
 
-// Start animation
+// Initialize and start animation
+updateCircle();
 animate();
+
+// Update circle on window resize
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  updateCircle();
+});
