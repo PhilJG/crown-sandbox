@@ -1,66 +1,66 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Neurosity Brain Visualization</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            display: block;
-        }
-        #menu {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 10px;
-            z-index: 100;
-        }
-        .menu-button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .menu-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .menu-button.active {
-            background: #3498db;
-            border-color: #3498db;
-        }
-        .status {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            pointer-events: none;
-            backdrop-filter: blur(5px);
-        }
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #000;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: block;
+      }
+      #menu {
+        position: fixed;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        z-index: 100;
+      }
+      .menu-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .menu-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .menu-button.active {
+        background: #3498db;
+        border-color: #3498db;
+      }
+      .status {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        pointer-events: none;
+        backdrop-filter: blur(5px);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="status" id="status">Connecting to Neurosity device...</div>
     <div id="menu">
-        <button class="menu-button active" data-sketch="circle">Circle</button>
-        <button class="menu-button active" data-sketch="wave">Wave</button>
+      <button class="menu-button active" data-sketch="circle">Circle</button>
+      <button class="menu-button active" data-sketch="wave">Wave</button>
     </div>
     <script type="module" src="sketch-new.js"></script>
-</body>
+  </body>
 </html>
