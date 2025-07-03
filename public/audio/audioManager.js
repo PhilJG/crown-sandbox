@@ -20,10 +20,10 @@ export class AudioManager {
   }
 
   setupScale() {
-    // A minor pentatonic scale
+    // Expanded scale with more notes for better resolution in the target range
     const notes = [
-      [4, 'C'], [4, 'D'], [4, 'E'], [4, 'G'], [4, 'A'],
-      [5, 'C'], [5, 'D'], [5, 'E'], [5, 'G'], [5, 'A']
+      [3, 'A'], [3, 'B'], [4, 'C'], [4, 'D'], [4, 'E'], [4, 'F#'], [4, 'G'], [4, 'A'], 
+      [4, 'B'], [5, 'C'], [5, 'D'], [5, 'E'], [5, 'F#'], [5, 'G'], [5, 'A'], [5, 'B']
     ];
     
     this.scale = notes.map(([octave, note]) => {
@@ -44,7 +44,7 @@ export class AudioManager {
     return A4 * Math.pow(2, distance / 12);
   }
 
-  playFrequency(frequency, duration = 0.5) {
+  playFrequency(frequency, duration = 0.5, volume = 0.2) {
     if (!this.audioContext || !this.enabled) return;
 
     this.oscillator = this.audioContext.createOscillator();
@@ -56,8 +56,13 @@ export class AudioManager {
     this.oscillator.type = 'sine';
     this.oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
 
+    // Make volume proportional to the probability
+    const minGain = 0.1;
+    const maxGain = 0.3;
+    const gain = minGain + (volume * (maxGain - minGain));
+
     this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.05);
+    this.gainNode.gain.linearRampToValueAtTime(gain, this.audioContext.currentTime + 0.05);
     this.gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
 
     this.oscillator.start();
@@ -67,11 +72,31 @@ export class AudioManager {
   playNoteForProbability(probability) {
     if (!this.scale.length || !this.enabled) return;
     
-    const noteIndex = Math.min(Math.floor(probability * this.scale.length), this.scale.length - 1);
-    const frequency = this.scale[noteIndex];
+    // Apply a non-linear mapping to be more sensitive in the 0.2-0.45 range
+    // This will expand the middle range and compress the extremes
+    let mappedProbability;
+    if (probability < 0.2) {
+      // Compress the lower range
+      mappedProbability = probability * 0.5;
+    } else if (probability > 0.45) {
+      // Compress the upper range
+      mappedProbability = 0.7 + (probability - 0.45) * 0.3;
+    } else {
+      // Expand the middle range (0.2-0.45)
+      mappedProbability = 0.5 + (probability - 0.2) * 0.8;
+    }
     
-    if (frequency) {
-      this.playFrequency(frequency, 0.5);
+    // Ensure we're within bounds
+    mappedProbability = Math.max(0, Math.min(1, mappedProbability));
+    
+    // Map to note index with some overlap between octaves for smoother transitions
+    const noteIndex = Math.min(
+      Math.floor(mappedProbability * (this.scale.length + 2)) - 1,
+      this.scale.length - 1
+    );
+    
+    if (noteIndex >= 0 && noteIndex < this.scale.length) {
+      this.playFrequency(this.scale[noteIndex], 0.4, probability);
     }
   }
 
