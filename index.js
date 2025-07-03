@@ -1,9 +1,9 @@
 // Dependencies
 const { Notion } = require("@neurosity/notion");
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const path = require('path');
+const express = require("express");
+const http = require("http");
+const WebSocket = require("ws");
+const path = require("path");
 require("dotenv").config();
 
 // Authentication
@@ -32,7 +32,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Instantiating a notion
 const notion = new Notion({
@@ -42,19 +42,19 @@ const notion = new Notion({
 // Store connected WebSocket clients
 const clients = new Set();
 
-wss.on('connection', (ws) => {
-  console.log('New client connected');
+wss.on("connection", (ws) => {
+  console.log("New client connected");
   clients.add(ws);
-  
-  ws.on('close', () => {
-    console.log('Client disconnected');
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
     clients.delete(ws);
   });
 });
 
 const broadcast = (data) => {
   const message = JSON.stringify(data);
-  clients.forEach(client => {
+  clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
@@ -68,11 +68,11 @@ const main = async () => {
       password,
     });
 
-    console.log('Successfully connected to Neurosity device');
+    console.log("Successfully connected to Neurosity device");
 
     notion.calm().subscribe((calm) => {
       const timestamp = new Date().toLocaleTimeString();
-      
+
       // Log to console with color indicators
       if (calm.probability > 0.4) {
         console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟦");
@@ -83,11 +83,11 @@ const main = async () => {
       } else {
         console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟥");
       }
-      
+
       // Broadcast to all connected WebSocket clients
       broadcast({
-        type: 'calm',
-        probability: calm.probability
+        type: "calm",
+        probability: calm.probability,
       });
     });
 
@@ -95,11 +95,10 @@ const main = async () => {
     const PORT = process.env.PORT || 3000;
     server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
-      console.log('Waiting for calm data from Neurosity device...');
+      console.log("Waiting for calm data from Neurosity device...");
     });
-    
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     process.exit(1);
   }
 };

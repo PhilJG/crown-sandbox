@@ -12,22 +12,33 @@ const socket = new WebSocket("ws://" + window.location.host);
 
 // Visualization instances
 let visualizations = {};
-let currentVisualization = null;
+let activeVisualizations = [];
 
 // Initialize visualizations
 function initVisualizations() {
+  // Create and store all visualizations
   visualizations = {
     circle: new CircleVisualization(canvas, ctx),
     wave: new WaveVisualization(canvas, ctx)
   };
   
-  // Set default visualization
-  currentVisualization = visualizations.circle;
+  // Set both visualizations as active by default
+  activeVisualizations = [visualizations.circle, visualizations.wave];
+  
+  // Update button states
+  document.querySelectorAll('.menu-button').forEach(button => {
+    const vizName = button.dataset.sketch;
+    if (activeVisualizations.includes(visualizations[vizName])) {
+      button.classList.add('active');
+    } else {
+      button.classList.remove('active');
+    }
+  });
   
   // Initialize status
   const statusElement = document.getElementById("status");
   if (statusElement) {
-    statusElement.textContent = "Waiting for calm data...";
+    statusElement.textContent = "Connecting to Neurosity...";
   }
 }
 
@@ -40,11 +51,19 @@ function setupMenu() {
       menuButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
       
-      // Set current visualization
+      // Toggle visualization
       const visualizationName = button.dataset.sketch;
       if (visualizations[visualizationName]) {
-        currentVisualization = visualizations[visualizationName];
-        // Clear canvas when switching visualizations
+        const viz = visualizations[visualizationName];
+        const index = activeVisualizations.indexOf(viz);
+        if (index === -1) {
+          activeVisualizations.push(viz);
+          button.classList.add('active');
+        } else {
+          activeVisualizations.splice(index, 1);
+          button.classList.remove('active');
+        }
+        // Clear canvas when toggling visualizations
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     });
@@ -71,22 +90,50 @@ function resizeCanvas() {
 // Handle WebSocket messages
 socket.onmessage = function(event) {
   const data = JSON.parse(event.data);
-  if (data.type === "calm" && currentVisualization) {
+  if (data.type === "calm") {
     // Update all visualizations with new probability
-    Object.values(visualizations).forEach(viz => {
+    activeVisualizations.forEach(viz => {
       if (viz && typeof viz.update === 'function') {
         viz.update(data.probability);
       }
     });
+    
+    // Update status text if element exists
+    const statusElement = document.getElementById("status");
+    if (statusElement) {
+      statusElement.textContent = `Calm level: ${(data.probability * 100).toFixed(1)}%`;
+    }
   }
 };
 
 // Animation loop
 function animate() {
-  // Let the current visualization handle the drawing
-  if (currentVisualization && typeof currentVisualization.draw === 'function') {
-    currentVisualization.draw();
-  }
+  // Clear the entire canvas with a dark background
+  ctx.fillStyle = '#0a0a14';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw all active visualizations
+  activeVisualizations.forEach(viz => {
+    if (viz && typeof viz.draw === 'function') {
+      // Save the current context state
+      ctx.save();
+      
+      // Adjust the canvas for the current visualization
+      if (viz instanceof WaveVisualization) {
+        // Let the wave visualization handle its own positioning
+        viz.draw();
+      } else {
+        // For circle and other visualizations, use the top 70% of the screen
+        const circleAreaHeight = canvas.height * 0.7;
+        ctx.rect(0, 0, canvas.width, circleAreaHeight);
+        ctx.clip();
+        viz.draw();
+      }
+      
+      // Restore the context state
+      ctx.restore();
+    }
+  });
   
   requestAnimationFrame(animate);
 }
