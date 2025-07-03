@@ -31,7 +31,7 @@ export class WaveVisualization {
 
   draw() {
     // Draw the chart background
-    this.ctx.fillStyle = "rgba(25, 25, 35, 0.7)";
+    this.ctx.fillStyle = "rgba(25, 25, 35)";
     this.ctx.fillRect(0, this.offsetY, this.canvas.width, this.height);
 
     // Draw grid lines
