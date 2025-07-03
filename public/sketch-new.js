@@ -58,9 +58,13 @@ function setupMenu() {
   // Toggle sound button
   const soundToggle = document.getElementById("soundToggle");
   if (soundToggle && audioManager) {
+    // Set initial state
+    soundToggle.textContent = audioManager.enabled ? "🔊" : "🔇";
+    soundToggle.setAttribute("title", audioManager.enabled ? "Sound On" : "Sound Off");
+    
     soundToggle.addEventListener("click", () => {
       const isSoundOn = audioManager.toggle();
-      soundToggle.textContent = isSoundOn ? "" : "";
+      soundToggle.textContent = isSoundOn ? "🔊" : "🔇";
       soundToggle.setAttribute("title", isSoundOn ? "Sound On" : "Sound Off");
     });
   }
@@ -145,25 +149,28 @@ function animate() {
   ctx.fillStyle = "#0a0a14";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw circle visualization in the top 70% if active
-  if (activeVisualizations.includes(visualizations.circle)) {
-    ctx.save();
-    const circleAreaHeight = canvas.height * 0.7;
-    ctx.rect(0, 0, canvas.width, circleAreaHeight);
-    ctx.clip();
-    visualizations.circle.draw();
-    ctx.restore();
-  }
+  // Only proceed if visualizations are initialized
+  if (visualizations && Object.keys(visualizations).length > 0) {
+    // Draw circle visualization in the top 70% if active
+    if (visualizations.circle && activeVisualizations.includes(visualizations.circle)) {
+      ctx.save();
+      const circleAreaHeight = canvas.height * 0.7;
+      ctx.rect(0, 0, canvas.width, circleAreaHeight);
+      ctx.clip();
+      visualizations.circle.draw();
+      ctx.restore();
+    }
 
-  // Draw wave visualization in the bottom 30% if active
-  if (activeVisualizations.includes(visualizations.wave)) {
-    ctx.save();
-    const waveAreaTop = canvas.height * 0.7;
-    const waveAreaHeight = canvas.height * 0.3;
-    ctx.rect(0, waveAreaTop, canvas.width, waveAreaHeight);
-    ctx.clip();
-    visualizations.wave.draw();
-    ctx.restore();
+    // Draw wave visualization in the bottom 30% if active
+    if (visualizations.wave && activeVisualizations.includes(visualizations.wave)) {
+      ctx.save();
+      const waveAreaTop = canvas.height * 0.7;
+      const waveAreaHeight = canvas.height * 0.3;
+      ctx.rect(0, waveAreaTop, canvas.width, waveAreaHeight);
+      ctx.clip();
+      visualizations.wave.draw();
+      ctx.restore();
+    }
   }
 
   requestAnimationFrame(animate);
