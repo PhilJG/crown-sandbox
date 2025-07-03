@@ -1,32 +1,87 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Neurosity Calm Visualization</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #000;
-        }
-        canvas {
-            display: block;
-        }
-        .status {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-family: Arial, sans-serif;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            pointer-events: none;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: block;
+      }
+      .status {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 15px;
+        border-radius: 20px;
+        pointer-events: none;
+        z-index: 100;
+      }
+      #calm-level {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 15px;
+        border-radius: 20px;
+        z-index: 100;
+      }
+      .menu {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px 20px;
+        border-radius: 30px;
+        backdrop-filter: blur(5px);
+        z-index: 100;
+      }
+      .menu-button {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+      .menu-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .menu-button.active {
+        background: #4caf50;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="status" id="status">Connecting to Neurosity device...</div>
+    <div id="calm-level">Calm Level: <span id="calm-prob">0</span>%</div>
+
+    <div class="menu">
+      <button class="menu-button active" data-sketch="particles">
+        Particles
+      </button>
+      <button class="menu-button" data-sketch="waves">Waves</button>
+      <button class="menu-button" data-sketch="colorfield">Color Field</button>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
-    <script src="sketch.js"></script>
-</body>
+    <script src="js/sketches/particles.js"></script>
+    <script src="js/sketches/waves.js"></script>
+    <script src="js/sketches/colorfield.js"></script>
+    <script src="js/sketch-manager.js"></script>
+    <!-- <script src="sketch.js"></script> -->
+  </body>
 </html>

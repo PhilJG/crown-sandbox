@@ -2,7 +2,7 @@
 const { Notion } = require("@neurosity/notion");
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const path = require('path');
 require("dotenv").config();
 
@@ -29,36 +29,33 @@ console.log(`${email} attempting to authenticate to ${deviceId}`);
 // Setup Express server
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = new Server(server);
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve socket.io client
+app.get('/socket.io/socket.io.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'node_modules/socket.io/client-dist/socket.io.js'));
+});
 
 // Instantiating a notion
 const notion = new Notion({
   deviceId,
 });
 
-// Store connected WebSocket clients
-const clients = new Set();
-
-wss.on('connection', (ws) => {
+// Socket.IO connection handler
+io.on('connection', (socket) => {
   console.log('New client connected');
-  clients.add(ws);
   
-  ws.on('close', () => {
+  socket.on('disconnect', () => {
     console.log('Client disconnected');
-    clients.delete(ws);
   });
 });
 
-const broadcast = (data) => {
-  const message = JSON.stringify(data);
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
+// Broadcast to all connected clients
+function broadcast(data) {
+  io.emit('message', JSON.stringify(data));
 };
 
 const main = async () => {
