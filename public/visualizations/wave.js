@@ -5,13 +5,16 @@ export class WaveVisualization {
 
     // Chart properties
     this.dataPoints = [];
-    this.maxDataPoints = 100; // Number of data points to show
+    this.maxDataPoints = 50; // Number of data points to show
     this.probability = 0;
 
     // Visual properties
-    this.height = canvas.height * 0.3; // Take up 30% of the canvas height
-    this.offsetY = canvas.height * 0.7; // Start at 70% of the canvas height
+    this.offsetY = 20;
+    this.height = canvas.height - this.offsetY * 2;
+    this.width = canvas.width;
     this.padding = 20;
+
+
 
     // Initialize with empty data
     for (let i = 0; i < this.maxDataPoints; i++) {
@@ -122,7 +125,9 @@ export class WaveVisualization {
 
   onResize() {
     // Update dimensions for new canvas size
-    this.height = this.canvas.height * 0.3;
-    this.offsetY = this.canvas.height * 0.7; // Always position at 70% of canvas height
+    this.height = this.canvas.height - this.offsetY * 2;
+    this.width = this.canvas.width;
   }
+
+
 }

@@ -1,6 +1,7 @@
-// Import visualizations
+// Import visualizations and audio
 import { CircleVisualization } from "./visualizations/circle.js";
 import { WaveVisualization } from "./visualizations/wave.js";
+import { AudioManager } from "./audio/audioManager.js";
 
 // Create canvas and context
 const canvas = document.createElement("canvas");
@@ -14,6 +15,11 @@ const socket = new WebSocket("ws://" + window.location.host);
 let visualizations = {};
 let activeVisualizations = [];
 
+// Audio
+let audioManager;
+let lastNoteTime = 0;
+const NOTE_INTERVAL = 300; // ms between notes
+
 // Initialize visualizations
 function initVisualizations() {
   // Create and store all visualizations
@@ -26,6 +32,17 @@ function initVisualizations() {
   activeVisualizations = [visualizations.circle, visualizations.wave];
 
   // Update button states
+  updateMenuButtons();
+  
+  // Initialize status
+  const statusElement = document.getElementById("status");
+  if (statusElement) {
+    statusElement.textContent = "Connecting to Neurosity...";
+  }
+}
+
+// Update menu button states
+function updateMenuButtons() {
   document.querySelectorAll(".menu-button").forEach((button) => {
     const vizName = button.dataset.sketch;
     if (activeVisualizations.includes(visualizations[vizName])) {
@@ -34,16 +51,21 @@ function initVisualizations() {
       button.classList.remove("active");
     }
   });
-
-  // Initialize status
-  const statusElement = document.getElementById("status");
-  if (statusElement) {
-    statusElement.textContent = "Connecting to Neurosity...";
-  }
 }
 
 // Setup menu event listeners
 function setupMenu() {
+  // Toggle sound button
+  const soundToggle = document.getElementById("soundToggle");
+  if (soundToggle && audioManager) {
+    soundToggle.addEventListener("click", () => {
+      const isSoundOn = audioManager.toggle();
+      soundToggle.textContent = isSoundOn ? "" : "";
+      soundToggle.setAttribute("title", isSoundOn ? "Sound On" : "Sound Off");
+    });
+  }
+
+  // Toggle visualization buttons
   const menuButtons = document.querySelectorAll(".menu-button");
   menuButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -91,19 +113,28 @@ function resizeCanvas() {
 socket.onmessage = function(event) {
   const data = JSON.parse(event.data);
   if (data.type === "calm") {
-    // Update all visualizations with new probability
+    const probability = data.probability;
+    
+    // Update all active visualizations
     activeVisualizations.forEach((viz) => {
       if (viz && typeof viz.update === "function") {
-        viz.update(data.probability);
+        viz.update(probability);
       }
     });
-
+    
     // Update status text if element exists
     const statusElement = document.getElementById("status");
     if (statusElement) {
-      statusElement.textContent = `Calm level: ${(
-        data.probability * 100
-      ).toFixed(1)}%`;
+      statusElement.textContent = `Calm level: ${(probability * 100).toFixed(1)}%`;
+    }
+    
+    // Handle audio separately
+    if (audioManager && audioManager.enabled) {
+      const currentTime = Date.now();
+      if (currentTime - lastNoteTime > NOTE_INTERVAL) {
+        audioManager.playNoteForProbability(probability);
+        lastNoteTime = currentTime;
+      }
     }
   }
 };
@@ -140,13 +171,13 @@ function animate() {
 
 // Initialize everything when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize audio manager
+  audioManager = new AudioManager();
+  
+  // Initialize visualizations and UI
   initVisualizations();
   setupMenu();
+  window.addEventListener("resize", resizeCanvas);
   resizeCanvas();
   animate();
-});
-
-// Handle window resize
-window.addEventListener("resize", () => {
-  resizeCanvas();
 });
