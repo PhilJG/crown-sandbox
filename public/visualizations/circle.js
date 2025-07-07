@@ -36,9 +36,9 @@ export class CircleVisualization {
       this.circle.color = "#e74c3c"; // Red - least calm
     }
 
-    // Map probability to size (20% to 80% of maximum size)
-    const minSize = Math.min(this.canvas.width, this.canvas.height) * 0.2;
-    const maxSize = Math.min(this.canvas.width, this.canvas.height) * 0.8;
+    // Map probability to size (10% to 60% of maximum size)
+    const minSize = Math.min(this.canvas.width, this.canvas.height) * 0.1;
+    const maxSize = Math.min(this.canvas.width, this.canvas.height) * 0.6;
     this.circle.targetRadius = minSize + (maxSize - minSize) * probability;
   }
 

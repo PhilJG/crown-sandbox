@@ -9,7 +9,7 @@ document.body.insertBefore(canvas, document.body.firstChild);
 const ctx = canvas.getContext("2d");
 
 // Create WebSocket connection
-const socket = new WebSocket("ws://" + window.location.host);
+const socket = new WebSocket(`ws://${window.location.hostname}:3000`);
 
 // Visualization instances
 let visualizations = {};
@@ -33,7 +33,7 @@ function initVisualizations() {
 
   // Update button states
   updateMenuButtons();
-  
+
   // Initialize status
   const statusElement = document.getElementById("status");
   if (statusElement) {
@@ -60,8 +60,11 @@ function setupMenu() {
   if (soundToggle && audioManager) {
     // Set initial state
     soundToggle.textContent = audioManager.enabled ? "🔊" : "🔇";
-    soundToggle.setAttribute("title", audioManager.enabled ? "Sound On" : "Sound Off");
-    
+    soundToggle.setAttribute(
+      "title",
+      audioManager.enabled ? "Sound On" : "Sound Off"
+    );
+
     soundToggle.addEventListener("click", () => {
       const isSoundOn = audioManager.toggle();
       soundToggle.textContent = isSoundOn ? "🔊" : "🔇";
@@ -118,20 +121,22 @@ socket.onmessage = function(event) {
   const data = JSON.parse(event.data);
   if (data.type === "calm") {
     const probability = data.probability;
-    
+
     // Update all active visualizations
     activeVisualizations.forEach((viz) => {
       if (viz && typeof viz.update === "function") {
         viz.update(probability);
       }
     });
-    
+
     // Update status text if element exists
     const statusElement = document.getElementById("status");
     if (statusElement) {
-      statusElement.textContent = `Calm level: ${(probability * 100).toFixed(1)}%`;
+      statusElement.textContent = `Calm level: ${(probability * 100).toFixed(
+        1
+      )}%`;
     }
-    
+
     // Handle audio separately
     if (audioManager && audioManager.enabled) {
       const currentTime = Date.now();
@@ -152,7 +157,10 @@ function animate() {
   // Only proceed if visualizations are initialized
   if (visualizations && Object.keys(visualizations).length > 0) {
     // Draw circle visualization in the top 70% if active
-    if (visualizations.circle && activeVisualizations.includes(visualizations.circle)) {
+    if (
+      visualizations.circle &&
+      activeVisualizations.includes(visualizations.circle)
+    ) {
       ctx.save();
       const circleAreaHeight = canvas.height * 0.7;
       ctx.rect(0, 0, canvas.width, circleAreaHeight);
@@ -162,7 +170,10 @@ function animate() {
     }
 
     // Draw wave visualization in the bottom 30% if active
-    if (visualizations.wave && activeVisualizations.includes(visualizations.wave)) {
+    if (
+      visualizations.wave &&
+      activeVisualizations.includes(visualizations.wave)
+    ) {
       ctx.save();
       const waveAreaTop = canvas.height * 0.7;
       const waveAreaHeight = canvas.height * 0.3;
@@ -180,7 +191,7 @@ function animate() {
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize audio manager
   audioManager = new AudioManager();
-  
+
   // Initialize visualizations and UI
   initVisualizations();
   setupMenu();
