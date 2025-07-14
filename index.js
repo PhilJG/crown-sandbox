@@ -1,5 +1,5 @@
 // Dependencies
-const { Notion } = require("@neurosity/sdk");
+const { Neurosity } = require("@neurosity/sdk");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
@@ -43,7 +43,7 @@ const wss = new WebSocket.Server({ server });
 app.use(express.static(path.join(__dirname, "public")));
 
 // Instantiating a notion
-const notion = new Notion({
+const notion = new Neurosity({
   deviceId,
 });
 
