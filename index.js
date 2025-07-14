@@ -1,5 +1,5 @@
 // Dependencies
-const { Notion } = require("@neurosity/notion");
+const { Notion } = require("@neurosity/sdk");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");

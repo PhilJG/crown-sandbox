@@ -14,6 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@neurosity/notion": "^5.17.0",
+    "@neurosity/sdk": "^6.5.10",
     "canvas-sketch": "^0.7.7",
     "canvas-sketch-util": "^1.10.0",
     "dotenv": "^16.6.1",
