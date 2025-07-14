@@ -44,6 +44,11 @@ socket.onmessage = function(event) {
   const data = JSON.parse(event.data);
   if (data.type === "calm") {
     updateCircleState(data.probability);
+  } else if (data.type === "datasetTitle") {
+    const titleElement = document.getElementById('dataset-title');
+    if (titleElement) {
+      titleElement.textContent = `Dataset: ${data.title}`;
+    }
   }
 };
 

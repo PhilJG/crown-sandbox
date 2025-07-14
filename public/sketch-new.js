@@ -145,6 +145,12 @@ socket.onmessage = function(event) {
         lastNoteTime = currentTime;
       }
     }
+  } else if (data.type === "datasetTitle") {
+    // Update dataset title in the UI
+    const titleElement = document.getElementById('dataset-title');
+    if (titleElement) {
+      titleElement.textContent = `Dataset: ${data.title}`;
+    }
   }
 };
 
