@@ -1,23 +1,43 @@
 // Dependencies
 import { Neurosity } from "@neurosity/sdk";
-import { createInterface } from "readline";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
-import { broadcast } from "./server.js";
+import {
+  getSelectedDatasetPath,
+  setSelectedDatasetPath,
+  broadcast,
+} from "./server.js";
 
 dotenv.config();
 
+// Get the directory name in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Setup readline interface for user input
-const rl = createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+// Application state
+let useDummyData = false;
+let dummyDataPath = null;
+let currentDatasetTitle = "";
+let streamInterval = null;
+let currentDummyData = [];
+
+// Function to set the dummy data path
+export const setDummyDataPath = (path) => {
+  dummyDataPath = path;
+  useDummyData = true;
+  setSelectedDatasetPath(path);
+  console.log(`Using dummy data from: ${dummyDataPath}`);
+  updateDatasetTitle(`Dataset: ${path.split("/").pop()}`);
+};
+
+// Update dataset title and broadcast to clients
+const updateDatasetTitle = (title) => {
+  currentDatasetTitle = title;
+  broadcast({ type: "datasetTitle", title });
+};
 
 // Authentication
 const deviceId = process.env.DEVICE_ID || "";
@@ -25,19 +45,14 @@ const email = process.env.EMAIL || "";
 const password = process.env.PASSWORD || "";
 
 const verifyEnvs = (email, password, deviceId) => {
-  const invalidEnv = (env) => {
-    return env === "" || env === 0;
-  };
+  const invalidEnv = (env) => env === "" || env === 0;
   if (invalidEnv(email) || invalidEnv(password) || invalidEnv(deviceId)) {
     console.error(
       "Please verify deviceId, email and password are in .env file, quitting..."
     );
-    process.exit(0);
+    process.exit(1);
   }
 };
-
-verifyEnvs(email, password, deviceId);
-console.log(`${email} attempting to authenticate to ${deviceId}`);
 
 // Instantiating a notion
 const notion = new Neurosity({
@@ -46,7 +61,7 @@ const notion = new Neurosity({
 
 // List available dummy data files with categories
 const getDummyDataFiles = () => {
-  const dummyDataDir = path.join(__dirname, "dummy-data copy");
+  const dummyDataDir = path.join(__dirname, "dummy-data");
   const result = [];
 
   try {
@@ -65,7 +80,7 @@ const getDummyDataFiles = () => {
           .filter((file) => file.endsWith(".json"))
           .map((file) => ({
             filename: file,
-            path: path.join(category, file),
+            path: path.join("dummy-data", category, file),
             category: category
               .split("-")
               .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -82,40 +97,6 @@ const getDummyDataFiles = () => {
   return result;
 };
 
-// Process and transform dummy data to match Notion SDK format
-const processDummyData = (rawData) => {
-  if (!rawData || !rawData.samples || !Array.isArray(rawData.samples)) {
-    throw new Error("Invalid dummy data format");
-  }
-
-  // Calculate probabilities from the first channel for simplicity
-  // In a real app, you might want to process the EEG data more thoroughly
-  return rawData.samples.map((sample) => ({
-    label: "calm",
-    metric: "awareness",
-    probability: Math.min(
-      0.9,
-      Math.max(
-        0.1,
-        0.5 + parseFloat(sample.data[0]) / 100 // Normalize the first channel value to 0.1-0.9 range
-      )
-    ),
-    timestamp: sample.timestamp,
-  }));
-};
-
-// Read and parse dummy data
-const readDummyData = (filepath) => {
-  try {
-    const filePath = path.join(__dirname, "dummy-data copy", filepath);
-    const rawData = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    return processDummyData(rawData);
-  } catch (error) {
-    console.error("Error reading dummy data:", error);
-    return null;
-  }
-};
-
 // Group files by category
 const groupByCategory = (files) => {
   return files.reduce((groups, file) => {
@@ -128,149 +109,241 @@ const groupByCategory = (files) => {
   }, {});
 };
 
-// Prompt user to choose data source
-const promptDataSource = () => {
-  return new Promise((resolve) => {
-    const dummyFiles = getDummyDataFiles();
-    const filesByCategory = groupByCategory(dummyFiles);
-    const flatFilesList = [];
-    let optionNumber = 2; // Start from 2 (1 is for Neurosity device)
+// Get emoji based on probability value
+const getEmoji = (probability) => {
+  if (probability >= 0.7) return "🟦"; // High probability
+  if (probability >= 0.4) return "🟩"; // Medium probability
+  if (probability >= 0.1) return "🟧"; // Low probability
+  return "🟥"; // Very low probability
+};
 
-    console.log("\n=== Data Source Selection ===");
-    console.log("1. Connect to Neurosity device");
+// Function to start streaming data
+const startStreaming = (dummyData) => {
+  // Clear any existing interval
+  if (streamInterval) {
+    clearInterval(streamInterval);
+  }
 
-    if (dummyFiles.length > 0) {
-      Object.entries(filesByCategory).forEach(([category, files]) => {
-        console.log(`\n${category}:`);
-        files.forEach((file) => {
-          const name = file.filename
-            .replace(".json", "")
-            .replace(/([A-Z])/g, " $1")
-            .trim();
-          console.log(`  ${optionNumber}. ${name}`);
-          flatFilesList.push(file);
-          optionNumber++;
-        });
-      });
-    } else {
-      console.log("\nNo dummy data files found in dummy-data/ directory");
+  let index = 0;
+
+  const sendDataPoint = () => {
+    if (index >= dummyData.length) {
+      console.log("End of dataset reached. Restarting from beginning...");
+      index = 0;
     }
 
-    rl.question("\nSelect data source (1 for Neurosity device): ", (answer) => {
-      const choice = parseInt(answer);
-      if (choice === 1) {
-        resolve({ type: "notion" });
-      } else if (choice >= 2 && choice < optionNumber) {
-        const selectedFile = flatFilesList[choice - 2];
-        resolve({
-          type: "dummy",
-          filename: selectedFile.path,
-          displayName: `${
-            selectedFile.category
-          } - ${selectedFile.filename.replace(".json", "")}`,
-        });
-      } else {
-        console.log("Invalid choice. Defaulting to Neurosity device.");
-        resolve({ type: "notion" });
-      }
+    const dataPoint = dummyData[index++];
+    const timestamp = new Date().toLocaleTimeString();
+    const probability = dataPoint.probability;
+    const emoji = getEmoji(probability);
+
+    // Log to console
+    console.log(`[${timestamp}] ${probability.toFixed(10)} ${emoji}`);
+
+    // Broadcast to all WebSocket clients
+    broadcast({
+      type: "calm",
+      data: {
+        probability,
+        timestamp,
+        emoji,
+        rawValue: dataPoint.value, // Include the raw value if needed
+      },
     });
+  };
+
+  // Send first data point immediately
+  sendDataPoint();
+
+  // Then set up the interval for subsequent points
+  return setInterval(sendDataPoint, 1000);
+};
+
+// Process and transform dummy data to match Notion SDK format
+const processDummyData = (samples) => {
+  if (!Array.isArray(samples)) {
+    console.error("Invalid data format: expected array of samples");
+    throw new Error("Invalid data format: expected array of samples");
+  }
+
+  return samples.map((sample, index) => {
+    // If sample is just a number, use it as probability
+    if (typeof sample === "number") {
+      return {
+        value: sample,
+        probability: sample,
+        timestamp: Date.now() + index * 1000, // Add timestamp if not present
+        label: "calm",
+      };
+    }
+
+    // If sample is an object with data array
+    if (sample.data && Array.isArray(sample.data)) {
+      return {
+        ...sample,
+        value: sample.data[0] || 0, // Use first channel value as raw value
+        probability: sample.probability || 0.5, // Default probability if not present
+        timestamp: sample.timestamp || Date.now() + index * 1000,
+        label: sample.label || "calm",
+      };
+    }
+
+    // If sample is an object with probability
+    if (sample.probability !== undefined) {
+      return {
+        ...sample,
+        value: sample.value || sample.probability,
+        timestamp: sample.timestamp || Date.now() + index * 1000,
+        label: sample.label || "calm",
+      };
+    }
+
+    // Fallback for any other format
+    return {
+      value: 0.5,
+      probability: 0.5,
+      timestamp: Date.now() + index * 1000,
+      label: "calm",
+      ...sample,
+    };
   });
 };
 
-const main = async () => {
+// Read and parse dummy data
+const readDummyData = (filepath) => {
   try {
-    const dataSource = await promptDataSource();
+    const filePath = path.join(__dirname, filepath);
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const rawData = JSON.parse(fileContent);
 
-    if (dataSource.type === "notion") {
-      await notion.login({
-        email,
-        password,
-      });
-      console.log("Successfully connected to Neurosity device");
+    // Support both direct array and object with samples property
+    const samples = Array.isArray(rawData) ? rawData : rawData.samples || [];
 
-      // Update dataset title
-      updateDatasetTitle("Neurosity Device (Live Data)");
-
-      notion.calm().subscribe(handleCalmData);
-    } else {
-      const dummyData = readDummyData(dataSource.filename);
-      if (dummyData && dummyData.length > 0) {
-        const datasetName =
-          dataSource.displayName ||
-          dataSource.filename
-            .replace(".json", "")
-            .replace(/([A-Z])/g, " $1")
-            .trim();
-
-        console.log(`Using dummy data: ${datasetName}`);
-        console.log(`Found ${dummyData.length} data points`);
-
-        // Update dataset title with the display name
-        updateDatasetTitle(datasetName);
-
-        // Sort data by timestamp to ensure chronological order
-        dummyData.sort((a, b) => a.timestamp - b.timestamp);
-
-        // Stream data with 1-second intervals
-        let index = 0;
-        const streamNext = () => {
-          if (index < dummyData.length) {
-            handleCalmData(dummyData[index]);
-            index++;
-
-            // Use a fixed 1-second delay between data points
-            setTimeout(streamNext, 1000);
-          } else {
-            console.log("End of dummy data reached");
-          }
-        };
-
-        // Start streaming
-        streamNext();
-      } else {
-        throw new Error("Failed to load dummy data");
-      }
+    if (!samples.length) {
+      console.error("No samples found in the data");
+      return [];
     }
+
+    return processDummyData(samples);
   } catch (error) {
-    console.error("Error:", error);
-    process.exit(1);
+    console.error("Error reading dummy data:", error);
+    throw error; // Re-throw to handle it in the calling function
+  }
+};
+
+// Function to load and start streaming a dataset
+export const loadAndStreamDataset = async (datasetPath) => {
+  try {
+    console.log(`\nLoading dataset: ${datasetPath}`);
+
+    // Clear any existing interval
+    if (streamInterval) {
+      clearInterval(streamInterval);
+      streamInterval = null;
+    }
+
+    // Read and process the data
+    const processedData = readDummyData(datasetPath);
+
+    if (!processedData || processedData.length === 0) {
+      throw new Error("No valid data found in the dataset");
+    }
+
+    console.log(
+      `Loaded ${processedData.length} data points from ${path.basename(
+        datasetPath
+      )}`
+    );
+    console.log(
+      "Streaming data. Send a WebSocket message to change dataset.\n"
+    );
+
+    // Store the current dataset
+    currentDummyData = processedData;
+
+    // Start streaming the data
+    streamInterval = startStreaming(processedData);
+
+    return true;
+  } catch (error) {
+    console.error("Error loading dataset:", error.message);
+
+    // Broadcast error to clients
+    broadcast({
+      type: "error",
+      message: `Failed to load dataset: ${error.message}`,
+      datasetPath,
+    });
+
+    return false;
   }
 };
 
 const handleCalmData = (calm) => {
   const timestamp = new Date().toLocaleTimeString();
+  const emoji = getEmoji(calm.probability);
 
-  // Log to console with color indicators
-  if (calm.probability > 0.4) {
-    console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟦");
-  } else if (calm.probability > 0.3) {
-    console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟩");
-  } else if (calm.probability > 0.2) {
-    console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟧");
-  } else {
-    console.log(`[${timestamp}]`, calm.probability.toFixed(10), "🟥");
-  }
+  console.log(`[${timestamp}]`, calm.probability.toFixed(10), emoji);
 
   // Broadcast to all connected WebSocket clients
   broadcast({
     type: "calm",
-    probability: calm.probability,
+    data: {
+      probability: calm.probability,
+      timestamp,
+      emoji,
+    },
   });
 };
 
-// Function to update the dataset title in the UI
-const updateDatasetTitle = (title) => {
-  // Update the current title
-  currentDatasetTitle = title;
-  // Broadcast the title update to all connected clients
-  broadcast({
-    type: "datasetTitle",
-    title: title,
-  });
+const main = async () => {
+  try {
+    console.log("Neurosity Emulator - WebSocket Server");
+    console.log("===================================\n");
+
+    // Verify environment variables
+    verifyEnvs(email, password, deviceId);
+    console.log(`${email} attempting to authenticate to ${deviceId}`);
+
+    // Start with the first available dataset
+    const files = getDummyDataFiles();
+    if (files.length > 0) {
+      await loadAndStreamDataset(files[0].path);
+    } else {
+      console.error("No dataset files found in dummy-data directory");
+      process.exit(1);
+    }
+
+    console.log(
+      "\nWebSocket server is running. Connect to ws://localhost:3000 to control the emulator."
+    );
+    console.log(
+      "Send a WebSocket message with the following format to change datasets:"
+    );
+    console.log('{ "type": "selectDataset", "datasetIndex": 1 }');
+
+    // Keep the process running
+    await new Promise(() => {});
+  } catch (error) {
+    console.error("Error in main:", error);
+    process.exit(1);
+  }
 };
 
-// Start the application
-main().catch((error) => {
-  console.error("Error in main:", error);
-  process.exit(1);
+// Initialize the application but don't start streaming yet
+console.log("Neurosity Emulator - WebSocket Server");
+console.log("===================================\n");
+
+// Verify environment variables
+verifyEnvs(email, password, deviceId);
+
+// Start the server
+import("./server.js").then(() => {
+  console.log(
+    "\nWebSocket server is running. Connect to ws://localhost:3000 to control the emulator."
+  );
+  console.log(
+    "Send a WebSocket message with the following format to start streaming:"
+  );
+  console.log('{ "type": "selectDataset", "datasetIndex": 1 }');
 });

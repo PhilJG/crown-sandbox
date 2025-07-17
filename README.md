@@ -72,12 +72,59 @@ This project connects to a Neurosity headset to visualize brain activity data in
   - HTML5 Canvas for rendering
   - Vanilla JavaScript (no external frameworks required)
 
+## WebSocket API
+
+### Connecting to the WebSocket Server
+Connect to the WebSocket server at:
+```
+ws://localhost:4000
+```
+
+### Available Datasets
+To list available datasets, send:
+```json
+{
+  "type": "getDatasets"
+}
+```
+
+### Selecting a Dataset
+To select a dataset, send a WebSocket message with the dataset index:
+```json
+{
+  "type": "selectDataset",
+  "datasetIndex": 1
+}
+```
+
+### Data Format
+Once a dataset is selected, you'll receive data points in this format:
+```json
+{
+  "type": "calm",
+  "data": {
+    "probability": 0.75,
+    "timestamp": "12:34:56 PM",
+    "emoji": "🟢",
+    "rawValue": 0.75
+  }
+}
+```
+
 ## Usage
 
-1. Put on your Neurosity headset and ensure it's connected
-2. Open the web interface
-3. Use the menu to switch between different visualization modes
-4. Observe your brain activity in real-time
+1. Start the server: `node index.js`
+2. Connect to the WebSocket server at `ws://localhost:4000`
+3. Select a dataset by sending a `selectDataset` message with the desired index
+4. Observe the real-time data stream with color-coded emoji indicators
+
+### Emoji Legend
+- 🟦 (Blue): Very high probability (≥0.9)
+- 🟢 (Green): High probability (0.75-0.9)
+- 🟣 (Purple): Medium-high probability (0.6-0.75)
+- 🟡 (Yellow): Medium probability (0.45-0.6)
+- 🟠 (Orange): Medium-low probability (0.3-0.45)
+- 🔴 (Red): Low probability (<0.3)
 
 ## License
 
