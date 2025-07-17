@@ -1,15 +1,20 @@
 // Dependencies
-const { Neurosity } = require("@neurosity/sdk");
-const express = require("express");
-const http = require("http");
-const WebSocket = require("ws");
-const path = require("path");
-const fs = require("fs");
-const readline = require("readline");
-require("dotenv").config();
+import { Neurosity } from "@neurosity/sdk";
+import { createInterface } from "readline";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import path from "path";
+import fs from "fs";
+import dotenv from "dotenv";
+import { broadcast } from "./server.js";
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Setup readline interface for user input
-const rl = readline.createInterface({
+const rl = createInterface({
   input: process.stdin,
   output: process.stdout,
 });
@@ -34,50 +39,10 @@ const verifyEnvs = (email, password, deviceId) => {
 verifyEnvs(email, password, deviceId);
 console.log(`${email} attempting to authenticate to ${deviceId}`);
 
-// Setup Express server
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, "public")));
-
 // Instantiating a notion
 const notion = new Neurosity({
   deviceId,
 });
-
-// Store connected WebSocket clients
-const clients = new Set();
-
-let currentDatasetTitle = "Not Connected";
-
-wss.on("connection", (ws) => {
-  console.log("New client connected");
-  clients.add(ws);
-
-  // Send the current dataset title to the newly connected client
-  ws.send(
-    JSON.stringify({
-      type: "datasetTitle",
-      title: currentDatasetTitle,
-    })
-  );
-
-  ws.on("close", () => {
-    console.log("Client disconnected");
-    clients.delete(ws);
-  });
-});
-
-const broadcast = (data) => {
-  const message = JSON.stringify(data);
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-};
 
 // List available dummy data files with categories
 const getDummyDataFiles = () => {
@@ -303,13 +268,6 @@ const updateDatasetTitle = (title) => {
     title: title,
   });
 };
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log("Waiting for calm data...");
-});
 
 // Start the application
 main().catch((error) => {
