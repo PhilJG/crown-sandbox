@@ -5,9 +5,13 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
     "start": "node server.js",
     "build": "npm install && npm run build:client",
     "build:client": "mkdir -p public && cp -r index.js server.js node_modules public/ || true",
+=======
+    "start": "node server.js && node index.js",
+>>>>>>> 1ca1b82 (revert to working local server)
     "dev": "nodemon index.js"
   },
   "keywords": [

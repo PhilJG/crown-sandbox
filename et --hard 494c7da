@@ -1,0 +1,131 @@
+[33mcommit daa8e810ebe8c1f51c9df4bdea8c449b9d0e0135[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 17 13:18:31 2025 -0700
+
+    Fix Netlify deployment configuration
+
+[33mcommit fc1717c7da2a8f32e53c9d3c082909b2c55097c2[m[33m ([m[1;32mdataset-select-for-deployment[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 17 13:09:02 2025 -0700
+
+    Add Netlify deployment configuration and update package.json
+
+[33mcommit 494c7dad2871eb6af76d39df06e946ed0365e67f[m[33m ([m[1;31morigin/dataset-select-for-deployment[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 17 12:32:17 2025 -0700
+
+    add websocket calls
+
+[33mcommit e5279005e6783ad8fd44c5449c8ab05e86f95183[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Wed Jul 16 17:34:54 2025 -0700
+
+    migrate websocket to express.js
+
+[33mcommit cdc4b915586d8d44ef1cbc1a439bd48fb079b863[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Tue Jul 15 13:16:16 2025 -0700
+
+    add dev script in opackage.json
+
+[33mcommit 5a71829e3baac7c6c03fec70b5b990d43b89518d[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Mon Jul 14 12:24:16 2025 -0700
+
+    change notion to neurosity because of deprecation
+
+[33mcommit cd2ce5ef136794fb92aa3274d3826ce8a82de6f9[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Mon Jul 14 12:22:58 2025 -0700
+
+    add datasets otion
+
+[33mcommit 9bcd9a2d03b0a3de83d73258f8d7e7e8d28bd02f[m[33m ([m[1;31morigin/change-to-sdk[m[33m, [m[1;32mchange-to-sdk[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Mon Jul 14 11:10:28 2025 -0700
+
+    change to sdk, add dummy data
+
+[33mcommit 0da725ca36e5def46e51e158f91606b7673d3886[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Mon Jul 7 12:50:43 2025 -0700
+
+    add circle resize and adjusted websocket route
+
+[33mcommit cfd9c736fc1787bd53e2ebef8220086fa030376c[m[33m ([m[1;31morigin/add-sound[m[33m, [m[1;32mcreate-frontend-and-backend[m[33m, [m[1;32madd-sound[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 14:01:43 2025 -0700
+
+    add more range to audioManager
+
+[33mcommit 473c09aa0d70dd4cd72e12b9e5429d4fe1c851d8[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 13:55:38 2025 -0700
+
+    added line chart functionality to wave.js
+
+[33mcommit 329eb21593a3c44edfb2ba5bc583e72ceca1e44e[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 13:51:15 2025 -0700
+
+    added wave back in
+
+[33mcommit 94d43833ef0edfa361372e85244733f788838e89[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 13:35:23 2025 -0700
+
+    add audioManager.js but wave is now messed up
+
+[33mcommit 3b5521a327e02b4e84cb732011a4887d2c8dd797[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 13:21:57 2025 -0700
+
+    adjust background color of wave animation
+
+[33mcommit 25801860b987eb2d90b823e9c3b5e7d853513690[m[33m ([m[1;31morigin/create-menu-from-reactive-circle-branch[m[33m, [m[1;32mcreate-menu-from-reactive-circle-branch[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 13:13:48 2025 -0700
+
+    edit wave
+
+[33mcommit 0c7a24a90ce1dc02c9e5368b6d36f5e251624a4b[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 12:59:16 2025 -0700
+
+    change to line chart
+
+[33mcommit 24d7caf6b85d44b6301a26e75e501dc55dd25249[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 12:41:12 2025 -0700
+
+    add wave animation trigger
+
+[33mcommit b9217500a6e21780f7310c6844499e77ea79b3a3[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Thu Jul 3 12:16:41 2025 -0700
+
+    add menu and new animations file
+
+[33mcommit 8f938de843d819f4d05d0e99207161ebde605263[m[33m ([m[1;31morigin/reactive-circle[m[33m, [m[1;32mreactive-circle[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Sat Jun 28 17:20:46 2025 -0700
+
+    add reactive circle
+
+[33mcommit 946449f5c7dbedb118c2912b0c8cb6fa63b1e343[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Sat Jun 28 16:25:31 2025 -0700
+
+    add square
+
+[33mcommit 784b11454a50fb1df1f346c4fcba983a0721c8aa[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Sat Jun 28 15:40:32 2025 -0700
+
+    add canvas and randomized particle movement
+
+[33mcommit 8de21fed6e4a0ee5862cf2d236d6d7ee26d2aec3[m[33m ([m[1;32mcreate-menu[m[33m)[m
+Author: Phil <phl.j.gray@gmail.com>
+Date:   Fri Jun 27 16:49:34 2025 -0700
+
+    first commit

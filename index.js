@@ -17,6 +17,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+<<<<<<< HEAD
 // Application state
 let useDummyData = false;
 let dummyDataPath = null;
@@ -38,6 +39,16 @@ const updateDatasetTitle = (title) => {
   currentDatasetTitle = title;
   broadcast({ type: "datasetTitle", title });
 };
+=======
+// Add this line after your imports
+let currentDatasetTitle = "";
+
+// Setup readline interface for user input
+const rl = createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+>>>>>>> 1ca1b82 (revert to working local server)
 
 // Authentication
 const deviceId = process.env.DEVICE_ID || "";
