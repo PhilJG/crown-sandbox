@@ -57,8 +57,31 @@ This project connects to a Neurosity headset to visualize brain activity data in
 
 ## Available Visualizations
 
-- **Circle Visualization**: Displays brain activity in a circular pattern
-- **Wave Visualization**: Shows brain activity as a dynamic waveform
+### Circle Visualization
+The circular visualization provides an intuitive representation of brain activity levels with the following features:
+
+- **Dynamic Sizing**: The circle expands and contracts based on the current probability value (0.0 to 1.0)
+- **Color Coding**:
+  - Blue (#3498db): High probability (> 0.4) - Calm state
+  - Green (#2ecc71): Medium probability (0.3-0.4)
+  - Orange (#e67e22): Low probability (0.2-0.3)
+  - Red (#e74c3c): Very low probability (< 0.2)
+- **Smooth Transitions**: All size and color changes are smoothly interpolated for a natural feel
+- **Real-time Feedback**: The current calm percentage is displayed in the center of the circle
+
+### Wave Visualization
+Shows brain activity as a dynamic waveform, providing a different perspective on the data.
+
+### Audio Feedback
+The application includes an optional audio component that provides real-time sonification of brain activity:
+
+- **Musical Notes**: Maps probability values to musical notes in a pleasant scale
+- **Dynamic Volume**: Volume increases with higher probability values
+- **Responsive Timing**: Notes are played at regular intervals to prevent audio overload
+- **Non-linear Mapping**: The audio response is more sensitive in the middle range (0.2-0.45) to better represent subtle changes in focus/calm states
+- **Smooth Transitions**: Notes are played with smooth attack and release to prevent clicking sounds
+
+The audio uses a musical scale from A3 to B5, providing a wide range of pitches that correspond to different activity levels. The mapping is designed to be intuitive, with higher pitches generally indicating higher probability values.
 
 ## Dependencies
 
