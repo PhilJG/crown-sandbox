@@ -45,7 +45,7 @@ socket.onmessage = function(event) {
   if (data.type === "calm") {
     updateCircleState(data.probability);
   } else if (data.type === "datasetTitle") {
-    const titleElement = document.getElementById('dataset-title');
+    const titleElement = document.getElementById("dataset-title");
     if (titleElement) {
       titleElement.textContent = `Dataset: ${data.title}`;
     }
@@ -91,25 +91,33 @@ function animate() {
 
   // Create a simple centered gradient
   const gradient = ctx.createRadialGradient(
-    circle.x, circle.y, 0,  // Start at center with 0 radius
-    circle.x, circle.y, circle.radius  // End at full radius
+    circle.x,
+    circle.y,
+    0, // Start at center with 0 radius
+    circle.x,
+    circle.y,
+    circle.radius // End at full radius
   );
-  
+
   // Add color stops based on the current color
-  if (circle.color === '#3498db') { // Blue (calm)
-    gradient.addColorStop(0, '#64b5f6');
-    gradient.addColorStop(1, '#1565c0');
-  } else if (circle.color === '#2ecc71') { // Green
-    gradient.addColorStop(0, '#69f0ae');
-    gradient.addColorStop(1, '#1b5e20');
-  } else if (circle.color === '#e67e22') { // Orange
-    gradient.addColorStop(0, '#ffb74d');
-    gradient.addColorStop(1, '#e65100');
-  } else { // Red
-    gradient.addColorStop(0, '#ff8a80');
-    gradient.addColorStop(1, '#b71c1c');
+  if (circle.color === "#3498db") {
+    // Blue (calm)
+    gradient.addColorStop(0, "#64b5f6");
+    gradient.addColorStop(1, "#1565c0");
+  } else if (circle.color === "#2ecc71") {
+    // Green
+    gradient.addColorStop(0, "#69f0ae");
+    gradient.addColorStop(1, "#1b5e20");
+  } else if (circle.color === "#e67e22") {
+    // Orange
+    gradient.addColorStop(0, "#ffb74d");
+    gradient.addColorStop(1, "#e65100");
+  } else {
+    // Red
+    gradient.addColorStop(0, "#ff8a80");
+    gradient.addColorStop(1, "#b71c1c");
   }
-  
+
   // Draw the circle with gradient
   ctx.fillStyle = gradient;
   ctx.fill();
