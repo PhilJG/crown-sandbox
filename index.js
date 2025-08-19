@@ -39,6 +39,28 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const expressWs = require("express-ws")(app);
+
+app.ws("/", (ws, req) => {
+  console.log("New WebSocket connection at root");
+  // Add your existing WebSocket connection handling here
+  clients.add(ws);
+
+  // Send initial data if needed
+  ws.send(
+    JSON.stringify({
+      type: "connection",
+      status: "connected",
+      message: "Connected to WebSocket server",
+    })
+  );
+
+  ws.on("close", () => {
+    console.log("Client disconnected from root");
+    clients.delete(ws);
+  });
+});
+
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, "public")));
 
